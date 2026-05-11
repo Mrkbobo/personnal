@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYSTEM://PROFILE.EXE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;700&family=Exo+2:wght@300;400;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --cyan: #00f0ff;
+    --magenta: #ff00aa;
+    --violet: #8b5cf6;
+    --dark: #0a0a0f;
+    --darker: #050508;
+    --grid: rgba(0, 240, 255, 0.04);
+    --text: #c8d6e5;
+    --glow-cyan: 0 0 20px rgba(0,240,255,0.5), 0 0 60px rgba(0,240,255,0.2);
+    --glow-magenta: 0 0 20px rgba(255,0,170,0.5), 0 0 60px rgba(255,0,170,0.2);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--darker);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── Scanline overlay ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Grid background ── */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0;
+    animation: gridShift 20s linear infinite;
+  }
+
+  @keyframes gridShift {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(60px); }
+  }
+
+  /* ── Particle canvas ── */
+  #particles {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ── Main content ── */
+  .content {
+    position: relative;
+    z-index: 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeSlideUp 0.8s 0.3s forwards;
+  }
+
+  .hero-tag::before {
+    content: '> ';
+    color: var(--magenta);
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeSlideUp 0.8s 0.5s forwards;
+  }
+
+  .hero h1 .line1 {
+    display: block;
+    color: var(--cyan);
+    text-shadow: var(--glow-cyan);
+  }
+
+  .hero h1 .line2 {
+    display: block;
+    background: linear-gradient(135deg, var(--magenta), var(--violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    max-width: 560px;
+    color: rgba(200,214,229,0.7);
+    opacity: 0;
+    animation: fadeSlideUp 0.8s 0.7s forwards;
+  }
+
+  .hero-desc .typed {
+    color: var(--cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+  }
+
+  .cursor-blink {
+    animation: blink 1s step-end infinite;
+    color: var(--cyan);
+    font-weight: 700;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    opacity: 0;
+    animation: fadeSlideUp 0.8s 0.9s forwards;
+  }
+
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0.9rem 2rem;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: var(--darker);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .btn-primary:hover {
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--magenta);
+    border: 1px solid var(--magenta);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255,0,170,0.1);
+    box-shadow: var(--glow-magenta);
+    transform: translateY(-2px);
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background: rgba(10,10,15,0.9);
+    border-top: 1px solid rgba(0,240,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(0,240,255,0.5);
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .status-bar .live {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-bar .live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00ff88;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Section headers ── */
+  .section {
+    padding: 6rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .section-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: var(--magenta);
+    border: 1px solid rgba(255,0,170,0.3);
+    padding: 0.3rem 0.8rem;
+    letter-spacing: 2px;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cyan);
+    text-shadow: 0 0 30px rgba(0,240,255,0.3);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,240,255,0.3), transparent);
+  }
+
+  /* ── Skills ── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .skill-card {
+    background: rgba(10,10,20,0.6);
+    border: 1px solid rgba(0,240,255,0.08);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+
+  .skill-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, var(--cyan), var(--magenta));
+    transition: height 0.4s;
+  }
+
+  .skill-card:hover::before { height: 100%; }
+
+  .skill-card:hover {
+    border-color: rgba(0,240,255,0.2);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 40px rgba(0,240,255,0.08);
+  }
+
+  .skill-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .skill-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .skill-card p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: rgba(200,214,229,0.6);
+  }
+
+  .skill-bar {
+    margin-top: 1.2rem;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .skill-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    border-radius: 2px;
+    width: 0;
+    transition: width 1.5s ease;
+  }
+
+  .skill-bar-fill.visible { width: var(--level); }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 3rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, var(--cyan), var(--magenta), transparent);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 3rem;
+    padding-left: 2rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.6s;
+  }
+
+  .timeline-item.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -3.35rem;
+    top: 0.4rem;
+    width: 10px;
+    height: 10px;
+    background: var(--cyan);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 0 0 15px rgba(0,240,255,0.5);
+  }
+
+  .timeline-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--magenta);
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-desc {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: rgba(200,214,229,0.6);
+  }
+
+  /* ── Projects ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .project-card {
+    background: rgba(10,10,20,0.5);
+    border: 1px solid rgba(0,240,255,0.06);
+    overflow: hidden;
+    transition: all 0.4s;
+    position: relative;
+  }
+
+  .project-card:hover {
+    border-color: rgba(255,0,170,0.3);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(255,0,170,0.1);
+  }
+
+  .project-visual {
+    height: 180px;
+    background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(255,0,170,0.1));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-visual .grid-inner {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,240,255,0.06) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .project-visual .label {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    background: rgba(0,0,0,0.6);
+    padding: 0.3rem 0.6rem;
+    border: 1px solid rgba(0,240,255,0.2);
+  }
+
+  .project-body {
+    padding: 1.5rem;
+  }
+
+  .project-body h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.6rem;
+  }
+
+  .project-body p {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: rgba(200,214,229,0.5);
+    margin-bottom: 1rem;
+  }
+
+  .project-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--violet);
+    border: 1px solid rgba(139,92,246,0.2);
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 1px;
+  }
+
+  /* ── Contact ── */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .contact-item {
+    background: rgba(10,10,20,0.5);
+    border: 1px solid rgba(0,240,255,0.06);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .contact-item:hover {
+    border-color: var(--cyan);
+    transform: translateY(-3px);
+    box-shadow: var(--glow-cyan);
+  }
+
+  .contact-item .icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+    display: block;
+  }
+
+  .contact-item .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+  }
+
+  .contact-item .value {
+    font-size: 0.85rem;
+    color: rgba(200,214,229,0.6);
+    margin-top: 0.3rem;
+  }
+
+  /* ── Glitch effect ── */
+  .glitch {
+    position: relative;
+  }
+
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glitch::before {
+    color: var(--cyan);
+    z-index: -1;
+    animation: glitch1 3s infinite;
+  }
+
+  .glitch::after {
+    color: var(--magenta);
+    z-index: -2;
+    animation: glitch2 3s infinite;
+  }
+
+  @keyframes glitch1 {
+    0%, 94%, 100% { transform: none; opacity: 0; }
+    95% { transform: translate(-3px, 1px); opacity: 0.8; }
+    96% { transform: translate(3px, -1px); opacity: 0; }
+  }
+
+  @keyframes glitch2 {
+    0%, 96%, 100% { transform: none; opacity: 0; }
+    97% { transform: translate(3px, 1px); opacity: 0.8; }
+    98% { transform: translate(-3px, -1px); opacity: 0; }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.7s;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Nav ── */
+  .nav {
+    position: fixed;
+    top: 0;
+    right: 2rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 50vh;
+    transform: translateY(-50%);
+  }
+
+  .nav a {
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(0,240,255,0.3);
+    background: transparent;
+    transition: all 0.3s;
+    display: block;
+  }
+
+  .nav a:hover, .nav a.active {
+    background: var(--cyan);
+    box-shadow: 0 0 10px rgba(0,240,255,0.5);
+  }
+
+  /* ── Data stream decoration ── */
+  .data-stream {
+    position: fixed;
+    top: 0;
+    left: 1rem;
+    width: 20px;
+    height: 100vh;
+    z-index: 2;
+    overflow: hidden;
+    opacity: 0.15;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    writing-mode: vertical-rl;
+    animation: streamDown 30s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes streamDown {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2.2rem; }
+    .hero-cta { flex-direction: column; }
+    .nav { display: none; }
+    .status-bar { font-size: 0.6rem; padding: 0 0.8rem; }
+    .projects-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 4rem 0 6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(0,240,255,0.25);
+    letter-spacing: 3px;
+  }
+
+  .footer .hex {
+    font-size: 0.6rem;
+    color: rgba(255,0,170,0.2);
+    margin-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<canvas id="particles"></canvas>
+
+<div class="data-stream">
+  01001000 01000101 01001100 01001100 01001111 00100000 01010111 01001111 01010010 01001100 01000100 00100000 01110011 01111001 01110011 01110100 01100101 01101101 00100000 01101111 01101110 01101100 01101001 01101110 01100101
+</div>
+
+<nav class="nav">
+  <a href="#hero" title="TOP"></a>
+  <a href="#skills" title="SKILLS"></a>
+  <a href="#timeline" title="TIMELINE"></a>
+  <a href="#projects" title="PROJECTS"></a>
+  <a href="#contact" title="CONTACT"></a>
+</nav>
+
+<div class="content">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-tag">SYSTEM INITIALIZED — PROFILE LOADED</div>
+    <h1>
+      <span class="line1 glitch" data-text="HELLO, WORLD.">HELLO, WORLD.</span>
+      <span class="line2">我是 [ 你的名字 ]</span>
+    </h1>
+    <p class="hero-desc">
+      开发者 / 设计师 / 终端诗人<br><br>
+      <span class="typed" id="typed"></span><span class="cursor-blink">▌</span>
+    </p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">EXPLORE →</a>
+      <a href="#contact" class="btn btn-ghost">CONNECT</a>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section class="section" id="skills">
+    <div class="section-header fade-in">
+      <span class="section-number">01</span>
+      <span class="section-title">SKILLS</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-card fade-in">
+        <span class="skill-icon">⟨/⟩</span>
+        <h3>FRONTEND</h3>
+        <p>构建像素级精确的用户界面，追求极致交互体验。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 92%"></div></div>
+      </div>
+      <div class="skill-card fade-in">
+        <span class="skill-icon">⬡</span>
+        <h3>BACKEND</h3>
+        <p>设计稳健的系统架构，让数据在服务器间优雅流转。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 85%"></div></div>
+      </div>
+      <div class="skill-card fade-in">
+        <span class="skill-icon">◈</span>
+        <h3>DESIGN</h3>
+        <p>以视觉语言传递信息，用美学定义产品气质。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 78%"></div></div>
+      </div>
+      <div class="skill-card fade-in">
+        <span class="skill-icon">⬢</span>
+        <h3>DEVOPS</h3>
+        <p>自动化一切可自动化的事，让部署如呼吸般自然。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 70%"></div></div>
+      </div>
+      <div class="skill-card fade-in">
+        <span class="skill-icon">⏣</span>
+        <h3>AI / ML</h3>
+        <p>探索智能边界，让机器理解人类语言与意图。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 65%"></div></div>
+      </div>
+      <div class="skill-card fade-in">
+        <span class="skill-icon">⎔</span>
+        <h3>OPEN SOURCE</h3>
+        <p>参与社区建设，相信代码改变世界。</p>
+        <div class="skill-bar"><div class="skill-bar-fill" style="--level: 80%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="section" id="timeline">
+    <div class="section-header fade-in">
+      <span class="section-number">02</span>
+      <span class="section-title">TIMELINE</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-date">2024 — NOW</div>
+        <div class="timeline-title">全栈工程师 @ 某科技公司</div>
+        <div class="timeline-desc">主导核心产品前端架构重构，性能提升 40%。推动设计系统标准化，统一团队视觉语言。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2022 — 2024</div>
+        <div class="timeline-title">前端开发工程师</div>
+        <div class="timeline-desc">负责多个 ToB 项目的前端开发，从零搭建组件库。参与开源项目贡献，GitHub 获得 500+ Stars。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2018 — 2022</div>
+        <div class="timeline-title">计算机科学 @ 某大学</div>
+        <div class="timeline-desc">主修计算机科学与技术。ACM 校赛一等奖，毕业设计获评优秀。在这里爱上了编程。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2003</div>
+        <div class="timeline-title">SYSTEM BOOT</div>
+        <div class="timeline-desc">01010110 01100001 01101100 01110101 01100101 — 世界准备好迎接一个新变量。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="section" id="projects">
+    <div class="section-header fade-in">
+      <span class="section-number">03</span>
+      <span class="section-title">PROJECTS</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="projects-grid">
+      <div class="project-card fade-in">
+        <div class="project-visual">
+          <div class="grid-inner"></div>
+          <span class="label">// OPEN SOURCE</span>
+        </div>
+        <div class="project-body">
+          <h3>Neural UI Kit</h3>
+          <p>基于 AI 驱动的自适应组件库，能根据用户行为自动调整布局与交互模式。</p>
+          <div class="project-tags">
+            <span class="tag">REACT</span>
+            <span class="tag">TENSORFLOW</span>
+            <span class="tag">DESIGN SYSTEM</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-card fade-in">
+        <div class="project-visual">
+          <div class="grid-inner"></div>
+          <span class="label">// SIDE PROJECT</span>
+        </div>
+        <div class="project-body">
+          <h3>CyberDeck Terminal</h3>
+          <p>赛博朋克风格的终端模拟器，支持自定义主题、插件系统和多窗口操作。</p>
+          <div class="project-tags">
+            <span class="tag">TYPESCRIPT</span>
+            <span class="tag">WEBGL</span>
+            <span class="tag">CLI</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-card fade-in">
+        <div class="project-visual">
+          <div class="grid-inner"></div>
+          <span class="label">// WORK</span>
+        </div>
+        <div class="project-body">
+          <h3>DataFlow Dashboard</h3>
+          <p>实时数据可视化平台，支持百万级数据点渲染与交互式钻取分析。</p>
+          <div class="project-tags">
+            <span class="tag">VUE 3</span>
+            <span class="tag">D3.JS</span>
+            <span class="tag">WEBSOCKET</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="section" id="contact">
+    <div class="section-header fade-in">
+      <span class="section-number">04</span>
+      <span class="section-title">CONNECT</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="contact-grid fade-in">
+      <a href="#" class="contact-item">
+        <span class="icon">🐙</span>
+        <span class="label">GITHUB</span>
+        <span class="value">@your-username</span>
+      </a>
+      <a href="#" class="contact-item">
+        <span class="icon">✉</span>
+        <span class="label">EMAIL</span>
+        <span class="value">hello@you.dev</span>
+      </a>
+      <a href="#" class="contact-item">
+        <span class="icon">🐦</span>
+        <span class="label">TWITTER</span>
+        <span class="value">@your-handle</span>
+      </a>
+      <a href="#" class="contact-item">
+        <span class="icon">💼</span>
+        <span class="label">LINKEDIN</span>
+        <span class="value">/in/your-name</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    BUILT WITH ☕ AND NEURONS<br>
+    <div class="hex">0x53 0x59 0x53 0x54 0x45 0x4D 0x20 0x4F 0x4E 0x4C 0x49 0x4E 0x45</div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="live">SYSTEM ONLINE</div>
+  <span id="clock"></span>
+  <span>SYS://PROFILE v2.0.26</span>
+</div>
+
+<script>
+// ── Particles ──
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+const PARTICLE_COUNT = 120;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 1.5 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.3;
+    this.speedY = (Math.random() - 0.5) * 0.3;
+    this.opacity = Math.random() * 0.5 + 0.1;
+    this.color = Math.random() > 0.7 ? '#ff00aa' : '#00f0ff';
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = this.opacity;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+function drawLines() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(0, 240, 255, ${0.06 * (1 - dist / 120)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  drawLines();
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── Typed text ──
+const texts = [
+  '用代码构建世界，用设计定义体验。',
+  'const future = await build(dreams);',
+  '在终端里写诗，在浏览器中造梦。',
+  'System.out.println("Hello, 未来");',
+  '每一行代码都是给世界的情书。'
+];
+let textIdx = 0, charIdx = 0, deleting = false;
+const typed = document.getElementById('typed');
+
+function type() {
+  const current = texts[textIdx];
+  if (!deleting) {
+    typed.textContent = current.slice(0, charIdx++);
+    if (charIdx > current.length) {
+      setTimeout(() => { deleting = true; type(); }, 2000);
+      return;
+    }
+  } else {
+    typed.textContent = current.slice(0, --charIdx);
+    if (charIdx < 0) {
+      deleting = false;
+      charIdx = 0;
+      textIdx = (textIdx + 1) % texts.length;
+    }
+  }
+  setTimeout(type, deleting ? 30 : 60);
+}
+type();
+
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s} UTC+8`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Scroll animations ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Skill bars
+      entry.target.querySelectorAll('.skill-bar-fill').forEach(bar => {
+        bar.classList.add('visible');
+      });
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-in, .timeline-item').forEach(el => observer.observe(el));
+
+// ── Nav active state ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 300) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ── Mouse glow ──
+document.addEventListener('mousemove', (e) => {
+  document.body.style.background = `
+    radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(0,240,255,0.03), transparent 60%),
+    var(--darker)
+  `;
+});
+</script>
+</body>
+</html>
